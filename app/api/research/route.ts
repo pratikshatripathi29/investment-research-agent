@@ -44,59 +44,66 @@ export async function POST(req: NextRequest) {
           for await (const chunk of researchStream) {
             const keys = Object.keys(chunk) as Array<keyof typeof chunk>;
             if (keys.length === 0) continue;
-            const nodeName = keys[0];
-            const nodeOutput = chunk[nodeName];
 
-            // Accumulate updates to capture final synthesis and decision
-            if (nodeOutput) {
-              finalState = { ...finalState, ...nodeOutput };
-            }
+            // Iterate over all nodes that finished in this super-step (ensures parallel data accumulation)
+            for (const nodeName of keys) {
+              const nodeOutput = chunk[nodeName];
 
-            // Route execution progress status messages
-            if (nodeName === "resolver" && chunk.resolver) {
-              const ticker = chunk.resolver.ticker;
-              const cik = chunk.resolver.cik;
-
-              if (ticker && cik) {
-                sendEvent("progress", {
-                  node: "resolver",
-                  status: "done",
-                  message: `Successfully resolved "${companyName}" to ticker ${ticker} (CIK: ${cik}).`
-                });
-
-                // Signal parallel fan-out running states
-                sendEvent("progress", { node: "financial", status: "running", message: "Fetching SEC filings and key metrics..." });
-                sendEvent("progress", { node: "market", status: "running", message: "Analysing competitive positioning and industry dynamics..." });
-                sendEvent("progress", { node: "news", status: "running", message: "Gathering recent news events and investor sentiment..." });
-                sendEvent("progress", { node: "risk", status: "running", message: "Scanning for litigation, regulations, and risk factors..." });
-              } else {
-                sendEvent("progress", {
-                  node: "resolver",
-                  status: "done",
-                  message: `Could not resolve "${companyName}" to a valid SEC ticker/CIK.`
-                });
-                sendEvent("progress", { node: "fail", status: "running", message: "Routing to failure abort sequence..." });
+              // Accumulate updates to capture final synthesis and decision
+              if (nodeOutput) {
+                finalState = { ...finalState, ...nodeOutput };
               }
-            } else if (nodeName === "financial") {
-              sendEvent("progress", { node: "financial", status: "done", message: "Completed financial health assessment summary." });
-            } else if (nodeName === "market") {
-              sendEvent("progress", { node: "market", status: "done", message: "Completed market moat and competitors analysis." });
-            } else if (nodeName === "news") {
-              sendEvent("progress", { node: "news", status: "done", message: "Completed recent news and developments analysis." });
-            } else if (nodeName === "risk") {
-              sendEvent("progress", { node: "risk", status: "done", message: "Completed risk and litigations scan." });
-            } else if (nodeName === "aggregator") {
-              sendEvent("progress", { node: "aggregator", status: "done", message: "Successfully aggregated parallel summaries into investment research brief." });
-              sendEvent("progress", { node: "decision_node", status: "running", message: "Evaluating company fundamentals against investment rubric..." });
-            } else if (nodeName === "decision_node") {
-              sendEvent("progress", { node: "decision_node", status: "done", message: "Formulated preliminary investment decision." });
-              sendEvent("progress", { node: "critic", status: "running", message: "Executing devil's advocate reviewer critique..." });
-            } else if (nodeName === "critic") {
-              sendEvent("progress", { node: "critic", status: "done", message: "Finalized critic review and verdict adjustment." });
-            } else if (nodeName === "fail") {
-              sendEvent("progress", { node: "fail", status: "done", message: "Aborted research due to lookup failure." });
+
+              // Route execution progress status messages
+              if (nodeName === "resolver" && chunk.resolver) {
+                const ticker = chunk.resolver.ticker;
+                const cik = chunk.resolver.cik;
+
+                if (ticker && cik) {
+                  sendEvent("progress", {
+                    node: "resolver",
+                    status: "done",
+                    message: `Successfully resolved "${companyName}" to ticker ${ticker} (CIK: ${cik}).`
+                  });
+
+                  // Signal parallel fan-out running states
+                  sendEvent("progress", { node: "financial", status: "running", message: "Fetching SEC filings and key metrics..." });
+                  sendEvent("progress", { node: "market", status: "running", message: "Analysing competitive positioning and industry dynamics..." });
+                  sendEvent("progress", { node: "news", status: "running", message: "Gathering recent news events and investor sentiment..." });
+                  sendEvent("progress", { node: "risk", status: "running", message: "Scanning for litigation, regulations, and risk factors..." });
+                } else {
+                  sendEvent("progress", {
+                    node: "resolver",
+                    status: "done",
+                    message: `Could not resolve "${companyName}" to a valid SEC ticker/CIK.`
+                  });
+                  sendEvent("progress", { node: "fail", status: "running", message: "Routing to failure abort sequence..." });
+                }
+              } else if (nodeName === "financial") {
+                sendEvent("progress", { node: "financial", status: "done", message: "Completed financial health assessment summary." });
+              } else if (nodeName === "market") {
+                sendEvent("progress", { node: "market", status: "done", message: "Completed market moat and competitors analysis." });
+              } else if (nodeName === "news") {
+                sendEvent("progress", { node: "news", status: "done", message: "Completed recent news and developments analysis." });
+              } else if (nodeName === "risk") {
+                sendEvent("progress", { node: "risk", status: "done", message: "Completed risk and litigations scan." });
+              } else if (nodeName === "aggregator") {
+                sendEvent("progress", { node: "aggregator", status: "done", message: "Successfully aggregated parallel summaries into investment research brief." });
+                sendEvent("progress", { node: "decision_node", status: "running", message: "Evaluating company fundamentals against investment rubric..." });
+              } else if (nodeName === "decision_node") {
+                sendEvent("progress", { node: "decision_node", status: "done", message: "Formulated preliminary investment decision." });
+                sendEvent("progress", { node: "critic", status: "running", message: "Executing devil's advocate reviewer critique..." });
+              } else if (nodeName === "critic") {
+                sendEvent("progress", { node: "critic", status: "done", message: "Finalized critic review and verdict adjustment." });
+              } else if (nodeName === "fail") {
+                sendEvent("progress", { node: "fail", status: "done", message: "Aborted research due to lookup failure." });
+              }
             }
           }
+
+          // Log server-side compilation status for debugging
+          console.log("[SSE API] Stream loop complete. Accumulation keys:", Object.keys(finalState));
+          console.log("[SSE API] decision present:", !!finalState.decision, "synthesis length:", finalState.synthesis?.length || 0);
 
           // 3. Complete State: send final decision and synthesis data
           sendEvent("complete", {

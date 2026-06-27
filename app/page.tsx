@@ -82,6 +82,8 @@ export default function Home() {
             }
           }
 
+          console.log("[Client SSE] Event parsed:", event, "Data length:", dataText.length);
+
           if (event === "progress" && dataText) {
             const progress = JSON.parse(dataText);
             const { node, status, message } = progress;
@@ -96,6 +98,7 @@ export default function Home() {
             );
           } else if (event === "complete" && dataText) {
             const finalData = JSON.parse(dataText);
+            console.log("[Client SSE] Complete payload received:", finalData);
             
             // Check if it failed company CIK/ticker resolution (failNode outcome)
             if (finalData.decision && finalData.decision.confidence === 0 && finalData.decision.verdict === "watch") {
