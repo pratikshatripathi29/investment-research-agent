@@ -61,6 +61,12 @@ Evaluation Steps:
 2. Evaluate whether this counter-argument is significant enough to alter the proposed decision or reduce its confidence.
 3. Output the finalized decision (either revised or confirmed/refined) conforming to the schema.
 
+CRITICAL SEMANTIC RULES:
+- "pass" means decline to invest (recommending AGAINST buying). Do NOT use "pass" to mean "passes the test" or as a positive endorsement. If your reasoning text argues the company is a good/attractive investment opportunity, the verdict MUST be "invest", NOT "pass".
+- "invest" means recommending TO invest (buy the stock).
+- "watch" means insufficient/mixed signals to decide either way (watchlist).
+- Make sure the reasoning text's conclusion direction always matches the chosen verdict. If the reasoning leans positive, the verdict should be 'invest'. If the reasoning leans negative, the verdict should be 'pass'. If mixed/neutral, it should be 'watch'.
+
 CRITICAL INSTRUCTIONS FOR REASONING FIELD:
 - You MUST append a short note at the very end of the 'reasoning' field in this format: 
   "\\n\\n[Critic Review: Counter-argument considered: <describe counter-argument>. Verdict was <revised/maintained> because <reason>.]"

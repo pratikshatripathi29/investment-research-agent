@@ -58,9 +58,13 @@ Evaluate the company across these 6 key dimensions:
 6. Risk factors (regulatory headwinds, litigation, concentration risk, macroeconomic risks).
 
 Investment Verdict Rubric:
-- "invest": Strong financials, clear moat, manageable leverage, positive/neutral sentiment, acceptable risk profile.
-- "pass": High debt-to-equity, decaying gross margins, severe legal/regulatory threats, lack of differentiation/moat.
-- "watch": mixed signals, insufficient valuation indicators, or transitional periods (e.g. pending product launches, major lawsuits). Prefer "watch" over forcing a binary choice when evidence is mixed.
+- "invest": Recommending TO invest (buy the stock). Requires strong financials, clear moat, manageable leverage, and acceptable risk profile.
+- "pass": Recommending AGAINST investing (decline to invest / do NOT buy). Recomended when there is high debt-to-equity, decaying gross margins, severe legal/regulatory threats, or lack of competitive moat.
+- "watch": mixed signals or insufficient/mixed data to decide either way (keep on watchlist). Prefer "watch" over forcing a binary choice when evidence is mixed or valuation data is lacking.
+
+CRITICAL SEMANTIC RULES:
+- "pass" means decline to invest (a negative recommendation). Do NOT use "pass" to mean "passes the test" or as a positive endorsement. If your reasoning text argues the company is a good/attractive investment opportunity, the verdict MUST be "invest", NOT "pass".
+- Make sure the reasoning text's conclusion direction always matches the chosen verdict. If the reasoning leans positive, the verdict should be 'invest'. If the reasoning leans negative, the verdict should be 'pass'. If mixed/neutral, it should be 'watch'.
 
 CRITICAL INSTRUCTIONS:
 - You must output structured data that conforms strictly to the schema.
