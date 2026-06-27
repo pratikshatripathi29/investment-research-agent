@@ -1,6 +1,7 @@
 import { ResearchState } from "../../schema/state";
 import { getSecFilingsSummary, getKeyMetrics } from "../../tools/financialData";
 import { fastModel, invokeWithRetry } from "../llm";
+import { researchCache, CACHE_TTL } from "../cache";
 import { HumanMessage } from "@langchain/core/messages";
 
 export async function financialNode(state: ResearchState): Promise<Partial<ResearchState>> {
@@ -16,6 +17,18 @@ export async function financialNode(state: ResearchState): Promise<Partial<Resea
         },
         errors: [...state.errors, "financialNode: Both CIK and Ticker are missing. Cannot perform financial research."],
       };
+    }
+
+    // Check in-memory cache
+    const tickerKey = ticker ? ticker.toUpperCase() : null;
+    if (tickerKey) {
+      const cached = researchCache.get(tickerKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL && cached.financialData) {
+        console.log(`[Cache Hit] Using cached financialData for ${tickerKey}`);
+        return {
+          financialData: cached.financialData,
+        };
+      }
     }
 
     const [secFilings, keyMetrics] = await Promise.all([

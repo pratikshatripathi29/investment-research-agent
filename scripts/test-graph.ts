@@ -26,6 +26,20 @@ async function main() {
     console.error("Test 1 failed:", e.message || e);
   }
 
+  // 1B. Test caching on second run for Tesla
+  console.log("\n=== Test 1B: Duplicate Path (Tesla Cache Hit) ===");
+  try {
+    const start = Date.now();
+    const result = await runResearch("Tesla");
+    console.log(`Research completed in ${((Date.now() - start)/1000).toFixed(2)}s`);
+    console.log("Resolved Ticker:", result.ticker);
+    console.log("Resolved CIK:", result.cik);
+    console.log("Final Decision Verdict:", result.decision?.verdict);
+    console.log("Final Decision Confidence:", result.decision?.confidence);
+  } catch (e: any) {
+    console.error("Test 1B failed:", e.message || e);
+  }
+
   // 2. Test fail path on nonsense query
   console.log("\n=== Test 2: Fail Path (Nonsense Input) ===");
   try {

@@ -1,10 +1,25 @@
 import { ResearchState } from "../../schema/state";
 import { webResearch } from "../../tools/webResearch";
 import { fastModel, invokeWithRetry } from "../llm";
+import { researchCache, CACHE_TTL } from "../cache";
 import { HumanMessage } from "@langchain/core/messages";
 
 export async function newsNode(state: ResearchState): Promise<Partial<ResearchState>> {
   try {
+    const ticker = state.ticker;
+    const tickerKey = ticker ? ticker.toUpperCase() : null;
+
+    // Check in-memory cache
+    if (tickerKey) {
+      const cached = researchCache.get(tickerKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL && cached.newsData) {
+        console.log(`[Cache Hit] Using cached newsData for ${tickerKey}`);
+        return {
+          newsData: cached.newsData,
+        };
+      }
+    }
+
     const query = `${state.companyName} recent news 2026`;
     const searchResults = await webResearch(query, 5);
     const raw = { query, searchResults };

@@ -1,10 +1,25 @@
 import { ResearchState } from "../../schema/state";
 import { webResearch } from "../../tools/webResearch";
 import { fastModel, invokeWithRetry } from "../llm";
+import { researchCache, CACHE_TTL } from "../cache";
 import { HumanMessage } from "@langchain/core/messages";
 
 export async function riskNode(state: ResearchState): Promise<Partial<ResearchState>> {
   try {
+    const ticker = state.ticker;
+    const tickerKey = ticker ? ticker.toUpperCase() : null;
+
+    // Check in-memory cache
+    if (tickerKey) {
+      const cached = researchCache.get(tickerKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL && cached.riskData) {
+        console.log(`[Cache Hit] Using cached riskData for ${tickerKey}`);
+        return {
+          riskData: cached.riskData,
+        };
+      }
+    }
+
     const query = `${state.companyName} lawsuit OR investigation OR regulatory risk OR controversy`;
     const searchResults = await webResearch(query, 5);
     const raw = { query, searchResults };

@@ -49,7 +49,7 @@ export default function Home() {
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to initiate research.");
+        throw new Error(errData.error || `HTTP error ${response.status}: ${response.statusText}`);
       }
 
       const reader = response.body?.getReader();
@@ -96,6 +96,14 @@ export default function Home() {
             );
           } else if (event === "complete" && dataText) {
             const finalData = JSON.parse(dataText);
+            
+            // Check if it failed company CIK/ticker resolution (failNode outcome)
+            if (finalData.decision && finalData.decision.confidence === 0 && finalData.decision.verdict === "watch") {
+              setError("COMPANY NOT FOUND: The research agent failed to match the query to a valid SEC CIK or ticker. Please verify the company name spelling and try again.");
+              setLoading(false);
+              return;
+            }
+
             setSynthesis(finalData.synthesis);
             setDecision(finalData.decision);
             setLoading(false);
@@ -106,8 +114,27 @@ export default function Home() {
         }
       }
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "An unexpected error occurred.");
+      console.error("Error during submit handler:", err);
+      const errMsg = err.message || "";
+      
+      // Categorize errors to show explicit frontend error messages
+      if (
+        errMsg.includes("Failed to resolve CIK/ticker") || 
+        errMsg.includes("Could not resolve") || 
+        errMsg.includes("lookup failure") ||
+        errMsg.includes("companyName is required")
+      ) {
+        setError("COMPANY NOT FOUND: We couldn't resolve the entered name to a valid SEC-registered corporation CIK. Please refine your query (e.g. use standard names like Apple or Microsoft).");
+      } else if (
+        errMsg.includes("429") || 
+        errMsg.includes("rate_limit") || 
+        errMsg.includes("Rate limit reached") ||
+        errMsg.includes("rate limit")
+      ) {
+        setError("UPSTREAM API RATE LIMIT HIT: The Groq LLM API or financial data providers are experiencing temporary rate limits. Please wait a few seconds and try again.");
+      } else {
+        setError(`GENERIC SERVER ERROR: A server-side processing error occurred while executing the research agent graph (${errMsg || "no detail provided"}). Please try again or inspect server logs.`);
+      }
       setLoading(false);
     }
   };
@@ -150,14 +177,14 @@ export default function Home() {
           {error && (
             <div className="mt-4 p-4 bg-rose-950/50 border border-rose-800 rounded text-rose-300 text-xs flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
-              <span>ERROR: {error}</span>
+              <span>{error}</span>
             </div>
           )}
         </section>
 
         {/* Execution Log Timeline */}
-        {(loading || steps.some(s => s.status !== "idle")) && (
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-8">
+        {(loading || (steps.some(s => s.status !== "idle") && !error)) && (
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-8 animate-fade-in">
             <h2 className="text-xs font-bold tracking-wider text-zinc-400 uppercase mb-6 flex items-center justify-between">
               <span>AGENTS EXECUTION PIPELINE</span>
               {loading && <span className="animate-pulse text-emerald-400">STREAMING ACTIVE</span>}
@@ -200,7 +227,7 @@ export default function Home() {
         )}
 
         {/* Final Report Dashboard */}
-        {decision && (
+        {decision && !error && (
           <section className="animate-fade-in">
             <ReportView decision={decision} synthesis={synthesis} />
           </section>
