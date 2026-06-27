@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
           let finalState: any = {};
 
           for await (const chunk of researchStream) {
-            // Extract executing node name and its corresponding state outputs
-            const nodeName = Object.keys(chunk)[0];
+            const keys = Object.keys(chunk) as Array<keyof typeof chunk>;
+            if (keys.length === 0) continue;
+            const nodeName = keys[0];
             const nodeOutput = chunk[nodeName];
 
             // Accumulate updates to capture final synthesis and decision
@@ -52,9 +53,9 @@ export async function POST(req: NextRequest) {
             }
 
             // Route execution progress status messages
-            if (nodeName === "resolver") {
-              const ticker = nodeOutput.ticker;
-              const cik = nodeOutput.cik;
+            if (nodeName === "resolver" && chunk.resolver) {
+              const ticker = chunk.resolver.ticker;
+              const cik = chunk.resolver.cik;
 
               if (ticker && cik) {
                 sendEvent("progress", {

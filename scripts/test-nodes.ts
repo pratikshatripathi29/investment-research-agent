@@ -40,7 +40,7 @@ async function main() {
   console.log("\n2. Running financialNode with ticker:", state.ticker, "and CIK:", state.cik);
   const financialUpdate = await financialNode(state as any);
   console.log("Financial summary:", financialUpdate.financialData?.summary);
-  console.log("Financial raw metrics present:", !!financialUpdate.financialData?.raw?.keyMetrics);
+  console.log("Financial raw metrics present:", !!(financialUpdate.financialData?.raw as any)?.keyMetrics);
   state = { ...state, ...financialUpdate } as any;
 
   console.log("\n3. Running marketNode...");

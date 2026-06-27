@@ -24,8 +24,17 @@ export async function criticNode(state: ResearchState): Promise<Partial<Research
 
     // Extract verifiable raw URLs from state to prevent hallucinations
     const verifiableUrls: string[] = [];
-    if (state.financialData?.raw?.secFilings) {
-      const filings = state.financialData.raw.secFilings;
+    interface RawFinancialData {
+      secFilings?: Array<{ primaryDocumentUrl?: string }> | null;
+      keyMetrics?: any;
+    }
+    interface SearchResultData {
+      searchResults?: Array<{ url?: string }> | null;
+    }
+
+    const rawFin = state.financialData?.raw as RawFinancialData | undefined;
+    if (rawFin?.secFilings) {
+      const filings = rawFin.secFilings;
       if (Array.isArray(filings)) {
         filings.forEach((filing: any) => {
           if (filing && filing.primaryDocumentUrl) {
@@ -34,11 +43,17 @@ export async function criticNode(state: ResearchState): Promise<Partial<Research
         });
       }
     }
+
+    const rawMarket = state.marketData?.raw as SearchResultData | undefined;
+    const rawNews = state.newsData?.raw as SearchResultData | undefined;
+    const rawRisk = state.riskData?.raw as SearchResultData | undefined;
+
     const rawSearchSources = [
-      state.marketData?.raw?.searchResults,
-      state.newsData?.raw?.searchResults,
-      state.riskData?.raw?.searchResults,
+      rawMarket?.searchResults,
+      rawNews?.searchResults,
+      rawRisk?.searchResults,
     ];
+
     rawSearchSources.forEach((results) => {
       if (Array.isArray(results)) {
         results.forEach((item: any) => {
