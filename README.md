@@ -1,5 +1,5 @@
 # Argus Investment Research Agent
-
+https://investment-research-agent-chi.vercel.app/
 Argus is an automated AI-driven investment research analyst built with **Next.js**, **LangGraph.js**, and **Groq LLMs**. It takes a company name or ticker, resolves it to its official SEC CIK, executes four parallel research streams, aggregates the findings into an investment brief, applies a rigorous structured evaluation rubric, and runs a devil's-advocate reviewer pass before outputting a finalized investment verdict.
 
 The entire node-by-node execution pipeline is streamed to a custom terminal-inspired dashboard in real time using Server-Sent Events (SSE).
